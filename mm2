@@ -15,7 +15,7 @@ rt.player = game.Players.LocalPlayer
 
 rt.coinContainer = nil
 rt.radius = 200 :: number -- Radius to search for coins
-rt.walkspeed = 26 :: number -- speed at which you will go to a coin measured in walkspeed
+rt.walkspeed = 28 :: number -- speed at which you will go to a coin measured in walkspeed
 rt.touchedCoins = {} -- Table to track touched coins
 rt.positionChangeConnections = setmetatable({}, { __mode = "v" }) -- Weak table for connections
 rt.Added = nil :: RBXScriptConnection
@@ -332,22 +332,28 @@ local function CollectCoins()
             break
         end
 
-        -- Find nearest coin
-        local nearestNode = rt.octree:GetNearest(rt:Character().PrimaryPart.Position, rt.radius, 1)[1]
-        if nearestNode then
-            local closestCoin = nearestNode.Object
-            if not isCoinTouched(closestCoin) then
-                local targetPosition = closestCoin.Position
-                local duration = (rt:Character().PrimaryPart.Position - targetPosition).Magnitude / rt.walkspeed
-                moveToPositionSlowly(targetPosition, duration)
-                markCoinAsTouched(closestCoin)
-                task.wait(0)
-            end
-        else
-            task.wait(1)
+-- Find nearest coin
+    local nearestNode = rt.octree:GetNearest(rt:Character().PrimaryPart.Position, rt.radius, 1)[1]
+    if nearestNode then
+        local closestCoin = nearestNode.Object
+        if not isCoinTouched(closestCoin) then
+            local targetPosition = closestCoin.Position
+            local duration = (rt:Character().PrimaryPart.Position - targetPosition).Magnitude / rt.walkspeed
+            
+            -- Abaissement du personnage pendant qu'il se déplace vers la pièce
+            local currentPosition = rt:Character().PrimaryPart.Position
+            local loweredPosition = Vector3.new(currentPosition.X, currentPosition.Y  - 0.5 , currentPosition.Z)  -- Abaisser de 3 unités
+            rt:Character():PivotTo(CFrame.new(loweredPosition))  -- Appliquer l'abaissement
+            
+            moveToPositionSlowly(targetPosition, duration)
+            markCoinAsTouched(closestCoin)
+            task.wait(0)
         end
+    else
+        task.wait(1)
     end
-    AutoFarmCleanUp()
+end
+AutoFarmCleanUp()
 end
 
 local function RespawnState()
